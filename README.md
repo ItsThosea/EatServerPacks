@@ -6,3 +6,5 @@ This mod adds a new button that will silently reject a required server resource 
 accepted it when you really didn't.<p>
 **Make sure to set the pack rule on your server list to PROMPT!**<p>
 <img src="example.png" width="720"><p>
+
+- Mod Icon made by Tiny Games.
