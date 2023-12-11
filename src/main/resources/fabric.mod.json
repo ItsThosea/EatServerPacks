@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "eatserverpacks",
+  "version": "${version}",
+  "name": "EatServerPacks",
+  "description": "Don't want to use a required server resource pack? Eat it!",
+  "authors": [
+    "Thosea"
+  ],
+  "license": "MIT",
+  "environment": "client",
+  "icon": "assets/eatserverpacks/icon.png",
+  "mixins": [
+    "eatserverpacks.mixins.json"
+  ],
+  "accessWidener": "eatserverpacks.accesswidener",
+  "depends": {
+    "minecraft": ">=1.20.3"
+  }
+}
