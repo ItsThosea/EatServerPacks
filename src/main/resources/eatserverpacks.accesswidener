@@ -1,3 +1,2 @@
 accessWidener v2 named
-accessible class net/minecraft/client/network/ClientCommonNetworkHandler$ConfirmServerResourcePackScreen
-accessible class net/minecraft/client/network/ClientCommonNetworkHandler$ConfirmServerResourcePackScreen$Pack
+accessible method net/minecraft/client/network/ClientPlayNetworkHandler sendResourcePackStatus (Lnet/minecraft/network/packet/c2s/play/ResourcePackStatusC2SPacket$Status;)V
