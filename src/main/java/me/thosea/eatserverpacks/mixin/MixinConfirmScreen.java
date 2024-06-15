@@ -7,7 +7,7 @@ import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.c2s.play.ResourcePackStatusC2SPacket.Status;
+import net.minecraft.network.packet.c2s.common.ResourcePackStatusC2SPacket.Status;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableTextContent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,7 +25,7 @@ public abstract class MixinConfirmScreen extends Screen {
 
 	@Shadow
 	protected abstract void addButton(ButtonWidget button);
-	
+
 	private boolean esp$isResourcePack;
 
 	@Inject(method = "<init>(Lit/unimi/dsi/fastutil/booleans/BooleanConsumer;Lnet/minecraft/text/Text;Lnet/minecraft/text/Text;Lnet/minecraft/text/Text;Lnet/minecraft/text/Text;)V", at = @At("TAIL"))
