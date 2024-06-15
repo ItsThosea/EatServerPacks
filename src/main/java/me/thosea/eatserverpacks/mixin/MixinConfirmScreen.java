@@ -1,6 +1,8 @@
 package me.thosea.eatserverpacks.mixin;
 
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
+import me.thosea.eatserverpacks.EatServerPackPolicy;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -10,7 +12,6 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableTextContent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -25,39 +26,46 @@ public abstract class MixinConfirmScreen extends Screen {
 	@Shadow
 	protected abstract void addButton(ButtonWidget button);
 	
-	@Unique private boolean isResourcePack;
+	private boolean esp$isResourcePack;
 
 	@Inject(method = "<init>(Lit/unimi/dsi/fastutil/booleans/BooleanConsumer;Lnet/minecraft/text/Text;Lnet/minecraft/text/Text;Lnet/minecraft/text/Text;Lnet/minecraft/text/Text;)V", at = @At("TAIL"))
-	private void onCreate(BooleanConsumer booleanConsumer, Text component, Text component2, Text component3, Text component4, CallbackInfo ci) {
+	private void onInit(BooleanConsumer booleanConsumer, Text component, Text component2, Text component3, Text component4, CallbackInfo ci) {
 		if(component.getContent() instanceof TranslatableTextContent content) {
 			String key = content.getKey();
 
-			// Injecting into ClientPlayNetworkHandler would
-			// make this mod incompatible with ReplayMod
-			// ReplayMod injects into the pipeline and discards
-			// resource pack packets. So, we have to do this cheesy solution. :(
+			// ReplayMod injects into the pipeline and bypasses
+			// ConfirmScreen in ClientPlayNetworkHandler#onResourcePackSend,
+			// so we check for the translation keys instead.
 			if(key.equals("multiplayer.requiredTexturePrompt.line1") ||
 					key.equals("multiplayer.texturePrompt.line1")) {
-				isResourcePack = true;
+				esp$isResourcePack = true;
 			}
 		}
 	}
 
 	@Inject(method = "addButtons", at = @At("TAIL"))
 	private void onAddButtons(int y, CallbackInfo ci) {
-		if(!isResourcePack) return;
+		if(!esp$isResourcePack) return;
+
+		ClientPlayNetworkHandler network = MinecraftClient.getInstance().getNetworkHandler();
+		if(network != null
+				&& network.getServerInfo() != null
+				&& network.getServerInfo().getResourcePackPolicy() == EatServerPackPolicy.INSTANCE) {
+			this.close();
+			this.esp$eatServerPack();
+			return;
+		}
 
 		addButton(ButtonWidget.builder(
 						Text.literal("Eat Server Pack"),
 						button -> {
 							client.setScreen(null);
-							eatServerPack();
+							esp$eatServerPack();
 						})
 				.dimensions(this.width / 2 - 155 + 80, y + 25, 150, 20).build());
 	}
 
-	@Unique
-	private void eatServerPack() {
+	private void esp$eatServerPack() {
 		ClientPlayNetworkHandler network = client.getNetworkHandler();
 		if(network == null) return;
 
