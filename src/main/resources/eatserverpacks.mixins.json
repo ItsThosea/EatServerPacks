@@ -7,7 +7,7 @@
   },
   "client": [
     "MixinConfirmScreen",
-    "MixinResourcePackPacket",
+    "MixinConnectScreen",
     "MixinResourcePackPolicy",
     "MixinServerInfo"
   ]
