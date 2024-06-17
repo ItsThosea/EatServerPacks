@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.net.URISyntaxException;
 import java.util.Map.Entry;
 
 @Mixin(ConfirmScreen.class)
@@ -71,7 +72,9 @@ public abstract class MixinConfirmScreen extends Screen {
 						Text.translatable("eatserverpack.download"),
 						button -> {
 							((ConfirmServerResourcePackScreen) (Object) this).packs.forEach(pack -> {
-								Util.getOperatingSystem().open(pack.url());
+								try {
+									Util.getOperatingSystem().open(pack.url().toURI());
+								} catch(URISyntaxException ignored) {}
 							});
 						})
 				.tooltip(Tooltip.of(Text.translatable("eatserverpack.download.tooltip")))
