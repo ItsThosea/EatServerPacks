@@ -2,12 +2,13 @@ package me.thosea.eatserverpacks.mixin;
 
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import me.thosea.eatserverpacks.EatServerPacks;
+import me.thosea.eatserverpacks.ui.ESPButton;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientCommonNetworkHandler.ConfirmServerResourcePackScreen;
+import net.minecraft.client.network.ClientCommonNetworkHandler.ConfirmServerResourcePackScreen.Pack;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -18,10 +19,14 @@ import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map.Entry;
 
 @Mixin(ConfirmScreen.class)
@@ -42,8 +47,9 @@ public abstract class MixinConfirmScreen extends Screen {
 	}
 
 	private ButtonWidget esp$eatPackButton;
-	private ButtonWidget esp$downloadPackButton;
+	private ButtonWidget esp$grabPackButton;
 
+	@SuppressWarnings("UnreachableCode") // I don't know either
 	@Inject(method = "addButtons", at = @At("TAIL"))
 	private void onAddButtons(int y, CallbackInfo ci) {
 		if(!esp$isResourcePack) return;
@@ -57,30 +63,50 @@ public abstract class MixinConfirmScreen extends Screen {
 			return;
 		}
 
-		addButton(esp$eatPackButton = ButtonWidget.builder(
-						Text.translatable("eatserverpack"),
-						button -> {
-							client.setScreen(null);
-							esp$eatServerPack();
-						})
-				.tooltip(Tooltip.of(Text.translatable("eatserverpack.tooltip")))
-				.dimensions(this.width / 2 - 155 + 80, y + 25, 150, 20)
-				.build());
+		addButton(esp$eatPackButton = new ESPButton(
+				Text.translatable("eatserverpack"),
+				Text.translatable("eatserverpack.tooltip", esp$getPacks().size()),
+				this.width / 2 - 155 + 80, y + 25,
+				() -> {
+					client.setScreen(null);
+					esp$eatServerPack();
+				},
+				null));
 
-		addButton(esp$downloadPackButton = ButtonWidget.builder(
-						Text.translatable("eatserverpack.download"),
-						button -> {
-							((ConfirmServerResourcePackScreen) (Object) this).packs.forEach(pack -> {
-								Util.getOperatingSystem().open(pack.url());
-							});
-						})
-				.tooltip(Tooltip.of(Text.translatable("eatserverpack.download.tooltip")))
-				.dimensions(this.width / 2 - 155 + 80, y + 25, 150, 20)
-				.build());
+		addButton(esp$grabPackButton = new ESPButton(
+				Text.translatable("eatserverpack.grab"),
+				Text.translatable("eatserverpack.grab.tooltip", esp$getPacks().size()),
+				this.width / 2 - 155 + 80, y + 25,
+				() -> {
+					String copy = String.join("\n", esp$getPacks().stream()
+							.map(pack -> this.esp$uriOf(pack).toString())
+							.toArray(String[]::new));
+
+					client.keyboard.setClipboard(copy);
+				},
+				() -> {
+					esp$getPacks().forEach(pack -> {
+						Util.getOperatingSystem().open(this.esp$uriOf(pack));
+					});
+				}));
 
 		// wait for tick
 		esp$eatPackButton.visible = false;
-		esp$downloadPackButton.visible = false;
+		esp$grabPackButton.visible = false;
+	}
+
+	@SuppressWarnings("DataFlowIssue")
+	@Unique
+	private List<Pack> esp$getPacks() {
+		return ((ConfirmServerResourcePackScreen) (Object) this).packs;
+	}
+
+	private URI esp$uriOf(Pack pack) {
+		try {
+			return pack.url().toURI();
+		} catch(URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
@@ -99,10 +125,10 @@ public abstract class MixinConfirmScreen extends Screen {
 
 		if(isSneakPressed) {
 			esp$eatPackButton.visible = false;
-			esp$downloadPackButton.visible = true;
+			esp$grabPackButton.visible = true;
 		} else {
 			esp$eatPackButton.visible = true;
-			esp$downloadPackButton.visible = false;
+			esp$grabPackButton.visible = false;
 		}
 	}
 
