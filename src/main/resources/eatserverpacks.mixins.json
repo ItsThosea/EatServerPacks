@@ -8,6 +8,7 @@
   "client": [
     "MixinConfirmScreen",
     "MixinConnectScreen",
+    "MixinNetworkHandler",
     "MixinResourcePackPolicy",
     "MixinServerInfo"
   ]
