@@ -2,6 +2,6 @@
   "eatserverpack": "Eat Server Pack",
   "eatserverpack.tooltip": "Hold shift to copy %s download link(s), or shift + right click to open in your browser.",
   "eatserverpack.grab": "Copy/Open Download Link",
-  "eatserverpack.grab.tooltip": "Stop holding shift to eat the pack instead, or press right click to open %s pack link(s) in your browser.",
+  "eatserverpack.grab.tooltip": "Stop holding shift to eat the pack instead, press left click to copy %1$s pack link(s), or press right click to open %1$s pack link(s) in your browser.",
   "addServer.resourcePack.eatserverpack": "Eat Pack"
 }
