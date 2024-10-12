@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-// we gotta inject here cause replaymod injects into the pipeline
+// inject at packet creation, since replaymod prevents the packet from being processed normally
 @Mixin(ResourcePackSendS2CPacket.class)
 public class MixinResourcePackPacket {
 	@Shadow @Final private String url;
@@ -23,5 +23,4 @@ public class MixinResourcePackPacket {
 			EatServerPacks.currentPackUrl = new URL(this.url);
 		} catch(MalformedURLException ignored) {}
 	}
-
 }

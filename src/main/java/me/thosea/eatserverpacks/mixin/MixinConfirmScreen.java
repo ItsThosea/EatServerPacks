@@ -2,10 +2,10 @@ package me.thosea.eatserverpacks.mixin;
 
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import me.thosea.eatserverpacks.EatServerPacks;
+import me.thosea.eatserverpacks.ui.ESPButton;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.option.KeyBinding;
@@ -21,7 +21,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.net.URL;
 import java.util.Map.Entry;
 
 @Mixin(ConfirmScreen.class)
@@ -41,58 +40,54 @@ public abstract class MixinConfirmScreen extends Screen {
 		if(component.getContent() instanceof TranslatableTextContent content) {
 			String key = content.getKey();
 
-			// ReplayMod injects into the pipeline and bypasses
-			// ConfirmScreen in ClientPlayNetworkHandler#onResourcePackSend,
-			// so we check for the translation keys instead.
-			if(key.equals("multiplayer.requiredTexturePrompt.line1") ||
-					key.equals("multiplayer.texturePrompt.line1")) {
+			// replaymod injects into the netty piepline and bypasses
+			// vanilla handling, so we need to check for the translation key instead
+			if(key.equals("multiplayer.requiredTexturePrompt.line1") || key.equals("multiplayer.texturePrompt.line1")) {
 				esp$isResourcePack = true;
 			}
 		}
 	}
 
 	private ButtonWidget esp$eatPackButton;
-	private ButtonWidget esp$downloadPackButton;
+	private ButtonWidget esp$grabPackButton;
 
 	@Inject(method = "addButtons", at = @At("TAIL"))
 	private void onAddButtons(int y, CallbackInfo ci) {
 		if(!esp$isResourcePack) return;
 
 		ClientPlayNetworkHandler network = MinecraftClient.getInstance().getNetworkHandler();
-		if(network != null
-				&& network.getServerInfo() != null
-				&& network.getServerInfo().getResourcePackPolicy() == EatServerPacks.PACK_POLICY) {
+		if(network == null) return;
+		if(network.getServerInfo() != null && network.getServerInfo()
+				.getResourcePackPolicy() == EatServerPacks.PACK_POLICY) {
 			this.close();
 			this.esp$eatServerPack();
 			return;
 		}
 
-		addButton(esp$eatPackButton = ButtonWidget.builder(
-						Text.translatable("eatserverpack"),
-						button -> {
-							client.setScreen(null);
-							esp$eatServerPack();
-						})
-				.tooltip(Tooltip.of(Text.translatable("eatserverpack.tooltip")))
-				.dimensions(this.width / 2 - 155 + 80, y + 25, 150, 20)
-				.build());
+		addButton(esp$eatPackButton = new ESPButton(
+				Text.translatable("eatserverpack"),
+				Text.translatable("eatserverpack.tooltip"),
+				this.width / 2 - 155 + 80, y + 25,
+				() -> {
+					client.setScreen(null);
+					esp$eatServerPack();
+				},
+				null));
 
-		URL url = EatServerPacks.currentPackUrl;
-		EatServerPacks.currentPackUrl = null;
-		addButton(esp$downloadPackButton = ButtonWidget.builder(
-						Text.translatable("eatserverpack.download"),
-						button -> {
-							if(url != null) {
-								Util.getOperatingSystem().open(url);
-							}
-						})
-				.tooltip(Tooltip.of(Text.translatable("eatserverpack.download.tooltip")))
-				.dimensions(this.width / 2 - 155 + 80, y + 25, 150, 20)
-				.build());
+		addButton(esp$grabPackButton = new ESPButton(
+				Text.translatable("eatserverpack.grab"),
+				Text.translatable("eatserverpack.grab.tooltip"),
+				this.width / 2 - 155 + 80, y + 25,
+				() -> {
+					client.keyboard.setClipboard(EatServerPacks.currentPackUrl.toString());
+				},
+				() -> {
+					Util.getOperatingSystem().open(EatServerPacks.currentPackUrl);
+				}));
 
 		// wait for tick
 		esp$eatPackButton.visible = false;
-		esp$downloadPackButton.visible = false;
+		esp$grabPackButton.visible = false;
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
@@ -111,10 +106,10 @@ public abstract class MixinConfirmScreen extends Screen {
 
 		if(isSneakPressed) {
 			esp$eatPackButton.visible = false;
-			esp$downloadPackButton.visible = true;
+			esp$grabPackButton.visible = true;
 		} else {
 			esp$eatPackButton.visible = true;
-			esp$downloadPackButton.visible = false;
+			esp$grabPackButton.visible = false;
 		}
 	}
 
