@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.net.URL;
 import java.util.Map.Entry;
 
 @Mixin(ConfirmScreen.class)
@@ -55,6 +56,9 @@ public abstract class MixinConfirmScreen extends Screen {
 	private void onAddButtons(int y, CallbackInfo ci) {
 		if(!esp$isResourcePack) return;
 
+		URL packUrl = EatServerPacks.currentPackUrl;
+		EatServerPacks.currentPackUrl = null;
+
 		ClientPlayNetworkHandler network = MinecraftClient.getInstance().getNetworkHandler();
 		if(network == null) return;
 		if(network.getServerInfo() != null && network.getServerInfo()
@@ -73,16 +77,15 @@ public abstract class MixinConfirmScreen extends Screen {
 					esp$eatServerPack();
 				},
 				null));
-
 		addButton(esp$grabPackButton = new ESPButton(
 				Text.translatable("eatserverpack.grab"),
 				Text.translatable("eatserverpack.grab.tooltip"),
 				this.width / 2 - 155 + 80, y + 25,
 				() -> {
-					client.keyboard.setClipboard(EatServerPacks.currentPackUrl.toString());
+					client.keyboard.setClipboard(packUrl.toString());
 				},
 				() -> {
-					Util.getOperatingSystem().open(EatServerPacks.currentPackUrl);
+					Util.getOperatingSystem().open(packUrl);
 				}));
 
 		// wait for tick
