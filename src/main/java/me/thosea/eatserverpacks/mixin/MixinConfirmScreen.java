@@ -10,6 +10,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.network.packet.c2s.common.ResourcePackStatusC2SPacket;
 import net.minecraft.network.packet.c2s.common.ResourcePackStatusC2SPacket.Status;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableTextContent;
@@ -120,7 +121,9 @@ public abstract class MixinConfirmScreen extends Screen {
 		ClientPlayNetworkHandler network = client.getNetworkHandler();
 		if(network == null) return;
 
-		network.sendResourcePackStatus(Status.ACCEPTED);
-		network.sendResourcePackStatus(Status.SUCCESSFULLY_LOADED);
+		// we don't use "network#sendResourcePackStatus" or "network#sendPacket" here
+		// so it also runs on 1.20.1
+		network.getConnection().send(new ResourcePackStatusC2SPacket(Status.ACCEPTED));
+		network.getConnection().send(new ResourcePackStatusC2SPacket(Status.SUCCESSFULLY_LOADED));
 	}
 }
